@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>virtual library tour</title>
+    <style>
+        #linkout{
+            height: 20;
+            position: fixed;
+            margin: 5px;
+            padding: 10px;
+        }
+
+        button{
+            background-color: black;
+            border: 2px solid white;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            border-radius: 4px;
+            padding: 15px 32px;
+        }
+    </style>
+</head>
+<body>
+    <div id="linkout"></div>
+    <script src="library/kaboom.js"></script>
+    <script type = "module">
+        kaboom({
+        global: true,
+        width: 640,
+        height: 480,
+        // crisp: true,
+        // fullscreen: false,
+        scale: 2,
+        // debug: true,
+        clearColor: [0, 0, 0, 1],
+        //plugins: [ proggyPlugin, ],
+    });
+        //loading sprites
+        loadSound("doorknob", "audio/doorknob.mp3");
+        loadSound("footsteps", "audio/footsteps.mp3");
+        loadSound("staticsound", "audio/static.mp3");
+        loadSprite("wall", "img/wall.png");
+        loadSprite("shelves", "img/shelves.png");
+        loadSprite("furniture", "img/furniture.png");
+        loadSprite("door_updown", "img/door_updown.png");
+        loadSprite("door_leftright", "img/door_leftright.png");
+        loadSprite("radio", "img/radio.png");
+        loadSprite("player", "img/skull_spritesheet.png", {
+            sliceX: 7,
+            anims:{
+                idle:{
+                    from: 0,
+                    to: 0,
+                    },
+                walkTo:{
+                    from: 4,
+                    to: 5,
+                    },
+                walkTowards:{
+                    from: 0,
+                    to: 1,
+                    },
+                walkSide:{
+                    from: 2,
+                    to: 3,
+                    },
+                talk:{
+                    from: 6,
+                    to: 6,
+                    },
+            }
+        });
+        //loadProggy();
+
+        const speed = 100;
+        const intro = `
+It was 2020, early spring, when the pandemic hit.
+
+It killed hundreds of thousands of people and made millions sick.
+
+It had to be just a matter of time before the walking dead roamed the 
+abandoned places.
+
+Anticipating the zombie takeover, and reasoning that whoever was left 
+after the plague would need adequate library services, regardless of 
+their state of putrefaction, the librarians placed 
+recordings all over the building, at important places and inside rooms.
+
+Walk around the library by pressing the arrow keys or the w s a d keys.
+
+Find and touch the radios to turn them on.
+
+Press the m key to look at the Map of the library.
+`;
+        let i = 0;
+        let textBg = null;
+        let talking = null;
+
+        const radios = {
+            "a":{
+                sprite: "radio",
+                msg:`
+This is the reference desk.
+
+Here you can ask us where to find a book you want, 
+how to find an article from the library databases for 
+your paper, or what databases and books are best for your 
+project.
+
+You can also ask us questions about citations.
+
+But beyond that, you can ask us anything you need 
+information on.
+
+It is not rare for us to get questions about textbooks, 
+college forms, finding a classroom, that kind of stuff.
+
+If we do not have the answer, we will find out who does.
+                `,
+                link: `<form action="https://libguides.mhcc.edu/online-library-services" method="get" target="_blank">
+         <button type="submit">Click me to ask a librarian</button>
+      </form>`,
+            },
+            "b":{
+                sprite: "radio",
+                msg:`
+These 2 rows of shelfs are our circulation shelfs.
+
+The books on these shelfs can be borrowed for 4 weeks, and renewed 
+once for another 2 weeks.
+
+From the center of the library to this end, you will find books on 
+U. S. history, geography, sports, literature, architecture, 
+languages, government, art, education, and law.
+
+                `,
+                link: `<form action="https://alliance-primo.hosted.exlibrisgroup.com/primo-explore/search?vid=MHCC&lang=en_US" method="get" target="_blank">
+         <button type="submit">Click me to find books in the library catalog</button>
+      </form>`,
+            },
+            "c":{
+                sprite: "radio",
+                msg:`
+Students come here to find a quieter place to study.
+
+Here you can find a desk, access to the library’s wi-fi, and power 
+outlets along the wall for your phone or laptop.
+
+Students in this area expect a certain level of quiet and 
+privacy.
+
+If quiet and privacy is not your thing right now, there are plenty 
+of other spaces in the library to hang out.
+
+If you want to sit down and study, pick a desk, use your 
+MyMHCC login to access the wi-fi, and get comfy.
+
+                `,
+                link: `<form action="https://www.mhcc.edu/LibraryPolicies/" method="get" target="_blank">
+         <button type="submit">Click me to see the library policies including noise</button>
+      </form>`,
+            },
+            "d":{
+                sprite: "radio",
+                msg:`
+This is the library lobby.
+
+The lobby is on the way to tutoring and other classrooms on 
+the 3rd floor. It can be very busy and at times rather noisy.
+
+Students in this area may be studying, but also having lunch, 
+socializing, or on their way to a class.
+
+Food and drink are allowed in the library.
+
+                `,
+                link: `<form action="https://www.mhcc.edu/College-Services/Tutoring--AVID/Learning-Success-Center/AVID-Learning-Success-Center.aspx" method="get" target="_blank">
+         <button type="submit">Click me to go to the tutoring page</button>
+      </form>`,
+            },
+            "e":{
+                sprite: "radio",
+                msg:`
+This is the circulation desk. Here is where you bring the books 
+you want to check out and borrow.
+
+All you need is your student id.
+
+By the way, here you can get your student id
+ as well.
+
+If you need to borrow a graphing calculator, or a skeleton, you 
+can find them here.
+
+This is also where you pick books on hold or from other libraries.
+
+                `,
+                link: `<form action="https://www.mhcc.edu/library/" method="get" target="_blank">
+         <button type="submit">Click me to go to the library home page</button>
+      </form>`,
+            },
+            "f":{
+                sprite: "radio",
+                msg:`
+Here we have a small but well stocked childrens library with 
+picture books and other books for kids.
+
+While it looks like a place for children, this is NOT a child 
+care area.
+
+The stairs over the children library take you to tutoring, 
+the computer lab, and other classrooms.
+
+If you need help with your homework, go upstairs 
+and talk with a tutor.
+
+You will also find two printers right near us, including the 
+only color printer.
+
+                `,
+                link: `<form action="https://alliance-primo.hosted.exlibrisgroup.com/primo-explore/search?query=any,contains,a&tab=almasummit_tab&search_scope=mhcc_alma_summit&vid=MHCC&facet=tlevel,include,available$$IMHCC&facet=rtype,include,pbooks&facet=local3,include,Children%27s$$IMHCC&offset=0" method="get" target="_blank">
+         <button type="submit">Click me to see the books at the children's library</button>
+      </form>`,
+            },
+            "g":{
+                sprite: "radio",
+                msg:`
+These are the READ shelfs.
+
+Here we keep books we believe are best for our students who take 
+ESL, GED or Adult Basic Education classes.
+
+If you are taking classes to learn English, or if you are 
+taking your GED, these books are pretty good.
+
+                `,
+                link: `<form action="https://alliance-primo.hosted.exlibrisgroup.com/primo-explore/search?query=any,contains,a&tab=almasummit_tab&search_scope=mhcc_alma_summit&vid=MHCC&facet=tlevel,include,available$$IMHCC&facet=rtype,include,pbooks&facet=local3,include,READ%20Collection$$IMHCC&offset=0" method="get" target="_blank">
+         <button type="submit">Click me to look a books in the READ collection</button>
+      </form>`,
+            },
+            "h":{
+                sprite: "radio",
+                msg:`
+We also have a nice collection of graphic novels, including some 
+popular manga.
+
+Many people find books with pictures easier to read.
+
+Others just like comics and graphic novel art.
+
+Most find the stories engaging and compelling.
+
+You should check it out sometime.
+
+                `,
+                link: `<form action="https://alliance-primo.hosted.exlibrisgroup.com/primo-explore/search?query=any,contains,a&tab=almasummit_tab&search_scope=mhcc_alma_summit&vid=MHCC&facet=tlevel,include,available$$IMHCC&facet=rtype,include,pbooks&facet=local3,include,Graphic%20Novels$$IMHCC&offset=0" method="get" target="_blank">
+         <button type="submit">Click me to find graphic novels</button>
+      </form>`,
+            },
+            "i":{
+                sprite: "radio",
+                msg:`
+These shelfs have our dictionaries and reference books. 
+
+We also keep here the very few journals we still have in print, as well 
+as a handful of newspapers and several magazines. You won't find much 
+here, unless fish is your thing.
+
+You are much better off using the electronic library databases.
+A librarian at the reference desk can help you get started.
+`,
+link: `<form action="http://libraryclassroom.com/using_library_databases/index.html" method="get" target="_blank">
+         <button type="submit">Click me for a short tutorial on using library databases</button>
+      </form>`,
+            },
+            "j":{
+                sprite: "radio",
+                msg:`
+This is room AC2307, also known as the library instruction room.
+
+Here the librarian teaches how to look for books in the library 
+catalog, how to use the library databases to find articles, and 
+how to find and use citations, for the most part.
+
+It is likely one of your classes will meet here in this room for a 
+library instruction session.
+
+If your teacher asks you to meet in the library, this is the place 
+they usually mean.
+
+This room is also used for staff meetings and other classes.
+
+When the room is not being used for classes or meetings, students 
+can use it to study, as a group or individually.
+
+When the room is used as a quiet study room, we always keep the 
+door open. No exceptions.
+
+You can find the room schedule for that week by the door.
+
+                `,
+                link: `<form action="http://libraryclassroom.com/" method="get" target="_blank">
+         <button type="submit">Click me to go to the library classroom and learn how to do basic library research</button>
+      </form>`,
+            },
+            "k":{
+                sprite: "radio",
+                msg:`
+This room is usually available for both group and individual 
+quiet study.
+
+Study rooms cannot be reserved.
+
+We always keep the door open for free flow in and out of the room.
+
+                `,
+                link: `<form action="https://www.mhcc.edu/LibraryPolicies/" method="get" target="_blank">
+         <button type="submit">Click me to see the library's policies</button>
+      </form>`,
+            },
+            "l":{
+                sprite: "radio",
+                msg:`
+This is the Bob Scott room.
+
+This room was named after Bob Scott, who discovered it.
+
+People use it mostly for meetings, but if the room is 
+vacant, you can use it as another quiet study room.
+
+                `,
+                link: `<form action="https://www.mhcc.edu/LibraryPolicies/" method="get" target="_blank">
+         <button type="submit">Click me to see the library's policies</button>
+      </form>`,
+            },
+            "m":{
+                sprite: "radio",
+                msg:`
+This room is usually available for both group and individual 
+quiet study.
+
+We always keep the door open for free flow in and out the room.
+
+People ask us a lot about reserving a study room.
+
+We do not reserve any of the study rooms in the library.
+
+                `,
+                link: `<form action="https://www.mhcc.edu/LibraryPolicies/" method="get" target="_blank">
+         <button type="submit">Click me to see the library's policies</button>
+      </form>`,
+            },
+            "n":{
+                sprite: "radio",
+                msg:`
+This room is a small computer lab you can use if you need to use a 
+computer.
+
+These computers have MS Word, Excel, Powerpoint, and are 
+connected to the web.
+
+To use them, follow the instructions on their screen.
+
+                `,
+                link: `<form action="https://www.mhcc.edu/ComputerLabs/" method="get" target="_blank">
+         <button type="submit">Click me to find out more about the college's computer labs</button>
+      </form>`,
+            },
+            "o":{
+                sprite: "radio",
+                msg:`
+We are at the other end of the circulation shelf. 
+
+From here to the center, you will find 
+encyclopedias, books on psychology, philosophy, hobbies, 
+technology, religion, world history, health, nursing, 
+ecology, math, and science. 
+
+Here we also keep the dvds.
+
+We have some fun movies to watch, but most of them are educational 
+films, documentaries, and instructional videos.
+
+Here you can also find equipment for people with accessibility 
+needs and vhs/dvd monitors.
+
+                `,
+                link: `<form action="https://alliance-primo.hosted.exlibrisgroup.com/primo-explore/search?vid=MHCC&lang=en_US" method="get" target="_blank">
+         <button type="submit">Click me to find books in the library catalog</button>
+      </form>`,
+            },
+            "p":{
+                sprite: "radio",
+                msg:`
+Throughout the library, and in the labs, you will find 
+several computers.
+
+As a student, you can use these computers to do your homework, 
+use the library catalog to find books, look for journal articles 
+with a librarian, or to go online.
+
+These computers have MS Word, Excel, PowerPoint, and are 
+connected to the Internet. If you need specific software 
+beyond the basics, you might have to try the computer labs at rooms 
+AC3333 or AC1451.
+
+You can also print your homework from these computers. 
+
+You will find printers by the stairs and across the circulation desk.
+
+There is no waiting list or signup sheet to use these computers.
+
+                `,
+                link: `<form action="https://www.mhcc.edu/SaintsPrint/" method="get" target="_blank">
+         <button type="submit">Click me to find out more about the college's student printing</button>
+      </form>`,
+            },
+        }
+        
+
+        scene("main", () => {
+            volume(0.5);
+            talk(intro);
+            gravity(0);
+            layers(["game", "ui",],"game");
+            camIgnore(["ui",]);
+            const map = addLevel([
+            "#####################%############%######",
+            "#          #    #   #  #      #  #  #   #",
+            "#          #$   #   #  #  $ $ # $#  # $ #",
+            "#          #    #   #  #      #k #  # $ #",
+            "#          #    #   #  #j $ $ #  #  #   #",
+            "#          #   m#   #  #$     #        l#",
+            "#     ######## ######  ###### ####  #####",
+            "#######                             ^   #",
+            "#         b       h            g    #####",
+            "# $ $ $  !!!!!  !!!!!  !!!!!  !!!!  #   #",
+            "#                                   ^   #",
+            "# $ $ $                  i          #####",
+            "#        !!!!!  !!!!!  !!!!!  ##!!  #   #",
+            "# $ $ $                       ##    ^   #",
+            "#                     a       ##f   #####",
+            "# $ $ $  !!!!!  !!!!! $   $ $    $  #   #",
+            "#  c                 $$          $  ^   #",
+            "#                         $ $    #  #####",
+            "#                                $  #   #",
+            "# $ $ $  !!!!!  !!!!!        d   $  ^   #",
+            "#                                   #####",
+            "# $ $ $                             ^   #",
+            "#        !!!!!  !!!!! p$  $$$$$ #  ######",
+            "# $ $ $                $ e$     $    ^  #",
+            "#                      $  $ $$$ #    #  #",
+            "# $ $ $  !!!!!  !!!!!  $  $     $    #  #",
+            "#                      $  $$$$$ #    #  #",
+            "#        o             #        #    #  #",
+            "############### ######%######%####%######",
+            "#            #   #####",
+            "#            #   #####",
+            "#            #   n   #",
+            "######################",
+            ], {
+                width: 32,
+                height: 32,
+                pos:(vec2(0, 0)),
+                "#":[
+                sprite("wall"),
+                solid(),
+            ],
+            "!":[
+                sprite("shelves"),
+                solid(),
+                //scale(1.5),
+            ],
+            "$":[
+                sprite("furniture"),
+                solid(),
+            ],
+            "^":[
+                sprite("door_leftright"),
+                solid(),
+                "door",
+                {
+                    msg: "office door. locked.",
+                }
+            ],
+            "%":[
+                sprite("door_updown"),
+                solid(),
+                "door",
+                {
+                    msg: "exit",
+                }
+            ],
+            any(ch){
+                const radio2 = radios[ch];
+                if (radio2){
+                    return[
+                        sprite(radio2.sprite),
+                        scale(0.5),
+                        "radio",
+                        {
+                            msg: radio2.msg,
+                            link: radio2.link,
+                        }
+                    ];
+                }
+            }
+            });
+
+            const player = add([
+                sprite("player"),
+                pos(1100, 800),
+                "player",
+                body(),
+                scale(0.9),
+                origin("center"),
+            ]);
+
+            player.action(() => {
+                camPos(player.pos);
+            });
+
+            keyDown("left", () => {
+                player.move(-speed, 0);
+            });
+            keyPress("left", () => {
+                player.flipX(1);
+                player.play("walkSide");
+            if(talking){
+                destroy(textBg);
+                destroy(talking);
+                talking = null;
+                textBg = null;
+                document.getElementById("linkout").innerHTML = null;
+                }
+            });
+            keyRelease("left", () => {
+                player.play("idle");
+            });
+            keyDown("right", () => {
+                player.move(speed, 0);
+            });
+            keyPress("right", () => {
+                player.flipX(-1);
+                player.play("walkSide");
+            if(talking){
+                destroy(textBg);
+                destroy(talking);
+                talking = null;
+                textBg = null;
+                document.getElementById("linkout").innerHTML = null;
+            }
+            });
+            keyRelease("right", () => {
+                player.play("idle");
+            });
+            keyDown("up", () => {
+                player.move(0, -speed); 
+            });
+            keyPress("up", () => {
+                player.play("walkTo");
+            if(talking){
+                destroy(textBg);
+                destroy(talking);
+                talking = null;
+                textBg = null;
+                document.getElementById("linkout").innerHTML = null;
+            }
+            });
+            keyRelease("up", () => {
+                player.play("idle");
+            });
+            keyDown("down", () => {
+                player.move(0, speed);
+            });
+            keyPress("down", () => {
+                player.play("walkTowards");
+            if(talking){
+                destroy(textBg);
+                destroy(talking);
+                talking = null;
+                textBg = null;
+                document.getElementById("linkout").innerHTML = null;
+                }
+            });
+            keyRelease("down", () => {
+                player.play("idle");
+            });
+            keyDown("a", () => {
+                player.move(-speed, 0);
+            });
+            keyPress("a", () => {
+                player.flipX(1);
+                player.play("walkSide");
+            if(talking){
+                destroy(textBg);
+                destroy(talking);
+                talking = null;
+                textBg = null;
+                document.getElementById("linkout").innerHTML = null;
+                }
+            });
+            keyRelease("a", () => {
+                player.play("idle");
+            });
+            keyDown("d", () => {
+                player.move(speed, 0);
+            });
+            keyPress("d", () => {
+                player.flipX(-1);
+                player.play("walkSide");
+            if(talking){
+                destroy(textBg);
+                destroy(talking);
+                talking = null;
+                textBg = null;
+                document.getElementById("linkout").innerHTML = null;
+            }
+            });
+            keyRelease("d", () => {
+                player.play("idle");
+            });
+            keyDown("w", () => {
+                player.move(0, -speed); 
+            });
+            keyPress("w", () => {
+                player.play("walkTo");
+            if(talking){
+                destroy(textBg);
+                destroy(talking);
+                talking = null;
+                textBg = null;
+                document.getElementById("linkout").innerHTML = null;
+            }
+            });
+            keyRelease("w", () => {
+                player.play("idle");
+            });
+            keyDown("s", () => {
+                player.move(0, speed);
+            });
+            keyPress("s", () => {
+                player.play("walkTowards");
+            if(talking){
+                destroy(textBg);
+                destroy(talking);
+                talking = null;
+                textBg = null;
+                document.getElementById("linkout").innerHTML = null;
+                }
+            });
+            keyRelease("s", () => {
+                player.play("idle");
+            });
+            keyPress("m", () => {
+                camScale(0.25);
+            });
+            keyRelease("m", () => {
+                camScale(1);
+            });
+
+            player.collides("radio", (ch) => {
+                let staticSound = play("staticsound");
+                talk(ch.msg);
+                document.getElementById("linkout").innerHTML = ch.link;
+                //console.log(ch.link);
+                
+            });
+            player.collides("door", (ch) => {
+                play("doorknob");
+                talk(ch.msg);
+            });
+
+            //console.log(radio.msg[0], radio.msg[1], radio.msg[2]);
+            function talk(msg){
+                textBg = add([
+                        rect(width(), height()),
+                        pos(0, 0),
+                        layer("ui"),
+                        color(0, 0, 0, 0.9,),
+                    ]);
+                talking = add([
+                        text(msg, 8,{
+                            width: textBg.width - 20,
+                        }),
+                        pos(5, 40),
+                        layer("ui"),
+                        color(1, 1, 1, 1,),
+                ]); 
+            }
+
+        });
+        start("main");
+    </script>
+</body>
+<!--MIT License
+
+Copyright (c) 2020 Sergio Lopez
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.-->
+</html>
